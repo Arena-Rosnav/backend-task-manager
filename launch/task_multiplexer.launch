@@ -1,0 +1,34 @@
+<launch>
+
+  <arg name="type" />
+  <arg name="user_id" />
+
+  <arg name="name" default="None" />
+
+  <arg name="robot_id" default="None" />
+  <arg name="planner_id" default="None" />
+  <arg name="hyperparams_id" default="None" />
+  <arg name="reward_id" default="None" />
+  <arg name="network_architecture_id" default="None" />
+
+  <arg name="task_id" default="" />
+
+  <node 
+    type="task_multiplexer.py" 
+    pkg="task_manager" 
+    name="$(anon task_multiplexer)" 
+    output="screen"
+    args="
+      --user_id $(arg user_id) 
+      --task_id $(arg task_id)
+      --type $(arg type) 
+      --name $(arg name) 
+      --reward_id $(arg reward_id) 
+      --planner_id $(arg planner_id)
+      --robot_id $(arg robot_id) 
+      --hyperparams_id $(arg hyperparams_id)
+      --network_architecture_id $(arg network_architecture_id)
+    " 
+  />
+
+</launch>

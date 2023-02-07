@@ -1,0 +1,20 @@
+<launch>
+  <arg name="base_path" default="/home/reyk/Schreibtisch/Uni/IGNC/arena-benchmark/backend_api" />
+
+  <param name="base_path" value="$(arg base_path)" />
+
+  <node 
+    type="training_manager.py" 
+    pkg="task_manager" 
+    name="training_manager" 
+    output="screen"
+  />
+
+  <node
+    type="evaluation_manager.py"
+    pkg="task_manager"
+    name="evaluation_manager"
+    output="screen"
+  />
+
+</launch>
