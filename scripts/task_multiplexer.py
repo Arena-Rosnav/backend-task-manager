@@ -20,8 +20,7 @@ def publish(pub, msg):
 
 class TaskScheduler:
     def __init__(self):
-        # rospy.Timer(rospy.Duration(0.5), TaskScheduler.schedule_new_task)
-        TaskScheduler.schedule_new_task(None)
+        rospy.Timer(rospy.Duration(0.5), TaskScheduler.schedule_new_task)
 
     def schedule_new_task(_):
         scheduled_task = Database.get_scheduled_task()
