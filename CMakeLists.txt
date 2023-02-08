@@ -58,6 +58,7 @@ include_directories(
 
 catkin_install_python(PROGRAMS
   scripts/task_manager.py
+  scripts/log_updater.py
   scripts/task_multiplexer.py
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

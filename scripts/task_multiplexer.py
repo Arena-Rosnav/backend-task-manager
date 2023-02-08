@@ -25,6 +25,9 @@ class TaskScheduler:
     def schedule_new_task(_):
         scheduled_task = Database.get_scheduled_task()
 
+        if not scheduled_task:
+            return
+
         task = Database.get_task(scheduled_task["_id"])
 
         print(task)

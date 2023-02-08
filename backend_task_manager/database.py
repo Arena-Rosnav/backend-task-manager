@@ -43,53 +43,41 @@ class Database:
 
         return network_architecture
 
-    def is_task_from_user(task_id, user_id):
-        return not db.tasks.find_one({
-            "userId": ObjectId(user_id),
-            "_id": ObjectId(task_id)
-        }) == None
-
 
     #### TASKS ##
-
-    def create_new_task(task_id, task_identifier, user_id, name, task_parameters):
-        now = Database.utc_now()
-        
-        db.tasks.insert_one({
-            "_id": ObjectId(task_id),
-            "userId": ObjectId(user_id),
-            "type": task_identifier,
-            "name": name,
-            "createdAt": now,
-            "updatedAt": now,
-            "status": TaskStatus.RUNNING,
-            **task_parameters
-        })
 
     def update_task(task_id, update):
         db.tasks.update_one({
             "_id": ObjectId(task_id)
         },{
-            "$set": update
+            "$set": {
+                **update,
+                "updatedAt": Database.utc_now()
+            }
         })
-
-    #### TASK PROCESS ##
-
-    def utc_now():
-        return datetime.now(timezone.utc)
 
     def get_scheduled_task():
         task = db.scheduledTasks.find_one({})
+
+        if not task:
+            return None
         
         db.scheduledTasks.delete_one({
             "_id": ObjectId(task["_id"])
         })
 
         return task
-    
+
     def get_task(task_id):
         return db.tasks.find_one({
             "_id": ObjectId(task_id)
+        })
+
+    def get_open_tasks():
+        return db.tasks.find({
+            "status": TaskStatus.RUNNING
+        }, {
+            "_id": True
         })
     
     def start_task(task_id, additional_args):
@@ -102,6 +90,32 @@ class Database:
                 "status": TaskStatus.RUNNING
             }
         })
+
+
+    #### TASK PROCESS ##
+
+    def update_task_log(task_id, log):
+        db.taskLogs.update_one(
+            {
+                "_id": ObjectId(task_id),
+            },
+            {
+                "$set": {
+                    "log": log,
+                    "updatedAt": Database.utc_now()
+                }
+            },
+            upsert=True
+        )
+
+
+    #### UTILS ## 
+
+    def utc_now():
+        return datetime.now(timezone.utc)
+
+
+    #### NOTIFICATIONS
 
     def insert_new_task_notification(task_id, user_id, status):
         db.notifications.insert_one({
