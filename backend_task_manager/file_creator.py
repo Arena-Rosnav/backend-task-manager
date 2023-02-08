@@ -2,7 +2,7 @@ import yaml
 import os
 import json
 
-from task_manager.config import (
+from backend_task_manager.config import (
     default_robot_values, 
     default_hyperparam_values, 
     config, 
@@ -10,7 +10,7 @@ from task_manager.config import (
     default_local_costmap
 )
 
-from task_manager.constants import Docker, Type
+from backend_task_manager.constants import Docker, Type
 
 class FileCreator:
     def __init__(self, task_id, user_id):
@@ -22,18 +22,18 @@ class FileCreator:
 
     def _create_dir(self, id, additional_paths=""):
         try: 
-            os.mkdir(os.path.join(config["ARENA_BENCHMARK"], "backend_api", "data", id, additional_paths))
+            os.mkdir(os.path.join(config["BASE_PATH"], "data", id, additional_paths))
         except:
             pass
 
     def _write_yaml(self, data, name, id, additional_paths=""):
         self._create_dir(id, additional_paths)
 
-        with open(os.path.join(config["ARENA_BENCHMARK"], "backend_api/data", id, additional_paths, name + ".yaml"), "w") as f:
+        with open(os.path.join(config["BASE_PATH"], "data", id, additional_paths, name + ".yaml"), "w") as f:
             yaml.dump(data, f)
 
     def _write_json(self, data, name, id):
-        with open(config["ARENA_BENCHMARK"] + "/backend_api/data/" + id + "/" + name + ".json", "w") as f:
+        with open(os.path.join(config["BASE_PATH"], "data", id, name + ".json"), "w") as f:
             json.dump(data, f)
 
     def create_reward_file(self, reward_data):

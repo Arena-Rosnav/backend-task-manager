@@ -1,40 +1,10 @@
 import rospy
-import argparse
 
-from task_manager.database import Database
+from backend_task_manager.msg import StartTraining, TaskId, StartEvaluation
 
-from task_manager.msg import StartTraining, TaskId, StartEvaluation
-from task_manager.constants import ExecutableType
-import task_manager.utils as utils
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("--type", choices=[
-        ExecutableType.START_TRAINING, 
-        ExecutableType.ABORT_TRAINING,
-        ExecutableType.FINISH_TRAINING,
-
-        ExecutableType.START_EVALUATION,
-        ExecutableType.ABORT_EVALUATION,
-        ExecutableType.FINISH_EVALUATION,
-
-    ])
-    parser.add_argument("--user_id")
-    parser.add_argument("--task_id")
-
-    parser.add_argument("--name", default=None)
-    parser.add_argument("--robot_id", default=None)
-    parser.add_argument("--planner_id", default=None)
-    parser.add_argument("--hyperparams_id", default=None)
-    parser.add_argument("--reward_id", default=None)
-    parser.add_argument("--scenario_id", default=None)
-    parser.add_argument("--network_architecture_id", default=None)
-
-    known_args, _ = parser.parse_known_args()
-
-    return known_args
+from backend_task_manager.constants import ExecutableType
+from backend_task_manager.database import Database
+import backend_task_manager.utils as utils
 
 
 def wait_for_publisher(pub):
@@ -48,79 +18,93 @@ def publish(pub, msg):
     pub.publish(msg)    
 
 
-def send_start_training(args):
-    utils.check_parameters(args.robot_id, args.hyperparams_id)
+class TaskScheduler:
+    def __init__(self):
+        # rospy.Timer(rospy.Duration(0.5), TaskScheduler.schedule_new_task)
+        TaskScheduler.schedule_new_task(None)
 
-    publisher = rospy.Publisher("/training/start", StartTraining, queue_size=10)
+    def schedule_new_task(_):
+        scheduled_task = Database.get_scheduled_task()
 
-    msg = StartTraining()
-    msg.user_id = args.user_id
-    msg.task_id = args.task_id
-    msg.name = args.name
+        task = Database.get_task(scheduled_task["_id"])
 
-    msg.robot_id = args.robot_id
-    msg.hyperparams_id = args.hyperparams_id
-    # msg.network_architecture_id = args.network_architecture_id
+        print(task)
 
-    # msg.reward_id = args.reward_id
+        TaskScheduler.multiplex_request(task, scheduled_task["type"])
 
-    publish(publisher, msg)
+    def multiplex_request(task, type):
+        if type == ExecutableType.START_TRAINING:
+            return TaskScheduler.send_start_training(task)
+        if type == ExecutableType.START_EVALUATION:
+            return TaskScheduler.send_start_evaluation(task)
 
+        if type == ExecutableType.ABORT_EVALUATION:
+            return TaskScheduler.send_task_trigger(task, "/evaluation/abort")
+        if type == ExecutableType.ABORT_TRAINING:
+            return TaskScheduler.send_task_trigger(task, "/training/abort")
 
-def send_start_evaluation(args):
-    utils.check_parameters(args.robot_id, args.planner_id)
+        if type == ExecutableType.FINISH_EVALUATION:
+            return TaskScheduler.send_task_trigger(task, "/evaluation/finish")
+        if type == ExecutableType.FINISH_TRAINING:
+            return TaskScheduler.send_task_trigger(task, "/training/finish")
 
-    publisher = rospy.Publisher("/evaluation/start", StartEvaluation, queue_size=10)
+    def send_task_trigger(task, namespace):
+        utils.check_parameters(str(task["_id"]), task["userId"])
 
-    msg = StartEvaluation()
-    msg.user_id = args.user_id
-    msg.task_id = args.task_id
-    msg.name = args.name
+        publisher = rospy.Publisher(namespace, TaskId, queue_size=10)
+        
+        msg = TaskId()
+        msg.task_id = str(task["_id"])
 
-    msg.robot_id = args.robot_id
-    msg.planner_id = args.planner_id
+        publish(publisher, msg)
 
-    print(msg)
+    def send_start_evaluation(task):
+        utils.check_parameters(task["robotId"], task["plannerId"])
 
-    publish(publisher, msg)
+        publisher = rospy.Publisher("/evaluation/start", StartEvaluation, queue_size=10)
 
+        msg = StartEvaluation()
+        msg.user_id = str(task["userId"])
+        msg.task_id = str(task["_id"])
+        msg.name = task["name"]
 
-def send_task_trigger(args, namespace):
-    utils.check_parameters(args.task_id, args.user_id)
+        msg.robot_id = task["robotId"]
+        msg.planner_id = task["plannerId"]
 
-    publisher = rospy.Publisher(namespace, TaskId, queue_size=10)
-    
-    msg = TaskId()
-    msg.task_id = args.task_id
+        print(msg)
 
-    publish(publisher, msg)
+        publish(publisher, msg)
 
+    def send_start_training(task):
+        utils.check_parameters(task["robotId"], task["hyperparamsId"])
 
-def multiplex_request(args):
-    if args.type == ExecutableType.START_TRAINING:
-        return send_start_training(args)
-    if args.type == ExecutableType.START_EVALUATION:
-        return send_start_evaluation(args)
+        publisher = rospy.Publisher("/training/start", StartTraining, queue_size=10)
 
-    if args.type == ExecutableType.ABORT_EVALUATION:
-        return send_task_trigger(args, "/evaluation/abort")
-    if args.type == ExecutableType.ABORT_TRAINING:
-        return send_task_trigger(args, "/training/abort")
+        msg = StartTraining()
+        msg.user_id = str(task["userId"])
+        msg.task_id = str(task["_id"])
+        msg.name = task["name"]
 
-    if args.type == ExecutableType.FINISH_EVALUATION:
-        return send_task_trigger(args, "/evaluation/finish")
-    if args.type == ExecutableType.FINISH_TRAINING:
-        return send_task_trigger(args, "/training/finish")
+        msg.robot_id = task["robotId"]
+        msg.hyperparams_id = task["hyperparamsId"]
+        # msg.network_architecture_id = task.network_architecture_id
 
-    
+        # msg.reward_id = task.reward_id
+
+        publish(publisher, msg)
 
 
 if __name__ == "__main__":
     rospy.init_node("task_multiplexer")
     print("starting node")
 
-    args = parse_args()
+    task_scheduler = TaskScheduler()
 
-    multiplex_request(args)
+    while not rospy.is_shutdown():
+        rospy.spin()
 
-    print("Startet Node", args)
+    # args = parse_args()
+
+    # multiplex_request(args)
+
+    # print("Startet Node", args)

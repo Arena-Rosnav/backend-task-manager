@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(task_manager)
+project(backend_task_manager)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -57,8 +57,7 @@ include_directories(
 #############
 
 catkin_install_python(PROGRAMS
-  scripts/training_manager.py
-  scripts/evaluation_manager.py
+  scripts/task_manager.py
   scripts/task_multiplexer.py
   
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

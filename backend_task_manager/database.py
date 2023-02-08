@@ -2,11 +2,11 @@ from pymongo import MongoClient
 from bson import ObjectId
 from datetime import datetime, timezone
 
-from task_manager.config import config
-from task_manager.constants import TaskStatus
+from backend_task_manager.config import config
+from backend_task_manager.constants import TaskStatus
 
 
-client = MongoClient(config.get("DB_HOST"), int(config.get("DB_PORT")))
+client = MongoClient(config.get("DB_HOST"))
 
 db = client.arena_benchmark
 
@@ -77,3 +77,37 @@ class Database:
 
     def utc_now():
         return datetime.now(timezone.utc)
+
+    def get_scheduled_task():
+        task = db.scheduledTasks.find_one({})
+        
+        # db.scheduledTasks.delete_one({
+        #     "_id": ObjectId(task["_id"])
+        # })
+
+        return task
+    
+    def get_task(task_id):
+        return db.tasks.find_one({
+            "_id": ObjectId(task_id)
+        })
+    
+    def start_task(task_id, additional_args):
+        db.tasks.update_one({
+            "_id": ObjectId(task_id)
+        }, {
+            "$set": {
+                **additional_args,
+                "updatedAt": Database.utc_now(),
+                "status": TaskStatus.RUNNING
+            }
+        })
+
+    def insert_new_task_notification(task_id, user_id, status):
+        db.notifications.insert_one({
+            "taskId": ObjectId(task_id),
+            "userId": ObjectId(user_id),
+            "createdAt": Database.utc_now(),
+            "status": status,
+            "read": False
+        })

@@ -1,15 +1,15 @@
 import os
 import rospy
 
-from task_manager.constants import Docker, Type
-from task_manager.config import config
+from backend_task_manager.constants import Docker, Type
+from backend_task_manager.config import config
 
 
 def training_startup_command(user_id, task_id, robot):
-    base_path = rospy.get_param("base_path")
+    base_path = config["BASE_PATH"]
     
     return (
-        f"docker run -it --rm --name {task_id} "
+        f"docker run -it --rm -d --name {task_id} "
         # For the entry file
         f"-v {os.path.join(base_path, 'docker', 'training')}:/root/startup "
         # For created agent
@@ -29,10 +29,10 @@ def training_startup_command(user_id, task_id, robot):
 
 
 def evaluation_startup_command(user_id, task_id, robot, planner):
-    base_path = rospy.get_param("base_path")
+    base_path = config["BASE_PATH"]
     
     return (
-        f"docker run -it --rm --name {task_id} --net=host "
+        f"docker run -it --rm -d --name {task_id} --net=host "
         # For the entry file
         f"-v {os.path.join(base_path, 'docker', 'evaluation')}:/root/startup "
         # For robot model
@@ -70,7 +70,7 @@ def planner_volume(base_path, user_id, task_id, robot, planner):
 
 
 def default_entrypoint_params(task_id):
-    return f"{task_id} {config['APP_TOKEN_KEY']} {config['APP_TOKEN']} http://{config['HOST_IP']}:{config['HOST_PORT']} "
+    return f"{task_id} {config['APP_TOKEN_KEY']} {config['APP_TOKEN']} {config['API_BASE_URL']} "
 
 
 

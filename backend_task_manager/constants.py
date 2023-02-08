@@ -30,3 +30,9 @@ class Type:
     PRIVATE = "private"
     PUBLIC = "public"
 
+class NotificationType:
+    TRAINING_FINISHED = "training_finished"
+    EVALUATION_FINISHED = "evaluation_finished"
+    NEW_BEST_MODEL = "new_best_model"
+    EVALUATION_STARTED = "evaluation_started"
+    TRAINING_STARTED = "training_started"

@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find backend_task_manager)/launch/task_multiplexer.launch" />
+
+  <include file="$(find backend_task_manager)/launch/task_manager.launch" />
+</launch>

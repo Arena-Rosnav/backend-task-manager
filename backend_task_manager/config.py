@@ -1,12 +1,17 @@
 from dotenv import dotenv_values
 import os
+import rospkg
 
-from task_manager.constants import Docker
+from backend_task_manager.constants import Docker
 
 
 config = {
     **os.environ,
-    **dotenv_values(os.environ.get("ARENA_BENCHMARK") + "/backend_api/.env"),
+    **dotenv_values(os.path.join(
+        rospkg.RosPack().get_path("backend_task_manager"),
+        ".env"
+    )),
+    "BASE_PATH": rospkg.RosPack().get_path("backend_task_manager")
 }
 
 default_robot_values = {
@@ -41,6 +46,7 @@ default_robot_values = {
         }
     }
 }
+
 
 default_global_costmap = lambda robot_radius: {
     "global_frame": "map",
