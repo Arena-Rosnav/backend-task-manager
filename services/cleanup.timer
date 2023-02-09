@@ -1,0 +1,11 @@
+[Unit]
+Description=Arena-Web Data-Cleanup Timer - Runs every 2 hours
+Requires=cleanup.service
+
+[Timer]
+Unit=cleanup.service
+OnUnitActiveSec=2h
+AccuracySec=10m
+
+[Install]
+WantedBy=timers.target

@@ -33,9 +33,31 @@ class Type:
     PRIVATE = "private"
     PUBLIC = "public"
 
+
 class NotificationType:
     TRAINING_FINISHED = "training_finished"
     EVALUATION_FINISHED = "evaluation_finished"
+    
     NEW_BEST_MODEL = "new_best_model"
+    
     EVALUATION_STARTED = "evaluation_started"
     TRAINING_STARTED = "training_started"
+
+    LOG_DOWNLOAD_READY = "log_download_ready"
+    DATA_DOWNLOAD_READY = "data_download_ready"
+    
+    PREPARE_DOWNLOAD_DATA = "prepare_download_data"
+    PREPARE_DOWNLOAD_LOG = "prepare_download_log"
+
+    DATA_DOWNLOAD_EXPIRED = "data_download_expired"
+    LOG_DOWNLOAD_EXPIRED = "log_download_expired"
+
+
+class DownloadStatus:
+    PENDING = "pending"
+    READY = "ready"
+
+
+class DownloadType:
+    LOG = "log"
+    DATA = "data"

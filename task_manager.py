@@ -7,9 +7,11 @@ import traceback
 
 from backend_task_manager.database import Database
 from backend_task_manager.file_creator import FileCreator
-from backend_task_manager.constants import TaskStatus, NotificationType, ExecutableType
+from backend_task_manager.config import config
+from backend_task_manager.constants import TaskStatus, NotificationType, ExecutableType, DownloadType
 from backend_task_manager.docker import training_startup_command, evaluation_startup_command
 import backend_task_manager.utils as utils
+from backend_task_manager.s3 import S3
 
 
 def colored(color, text):
@@ -127,6 +129,49 @@ class TaskManager:
         except:
             traceback.print_exc()
 
+    ## UPLOAD DATA ##
+
+    def upload_data(self, task):
+        dir_path = os.path.join(config["BASE_PATH"], "data", task.user_id, task.task_id)
+        
+        print(dir_path)
+
+        if not os.path.exists(dir_path):
+            return
+
+        print(colored(Fore.BLUE, "[UPLOAD]"), colored(Fore.CYAN, "[DATA]"), task.name)
+
+        file_content = utils.get_dir_as_zip(dir_path)
+
+        self.handle_upload(
+            task.task_id,
+            task.user_id,
+            "data.zip",
+            file_content,
+            NotificationType.DATA_DOWNLOAD_READY,
+            DownloadType.DATA
+        )
+
+    def upload_log(self, task):
+        file_path = os.path.join(config["BASE_PATH"], "data", task.task_id, "output.txt")
+
+        if not os.path.exists(file_path):
+            return
+        
+        print(colored(Fore.BLUE, "[UPLOAD]"), colored(Fore.YELLOW, "[LOG]"), task.name)
+        
+        with open(file_path) as f:
+            content = f.read()
+
+        self.handle_upload(
+            task.task_id,
+            task.user_id,
+            "log.txt",
+            content,
+            NotificationType.LOG_DOWNLOAD_READY,
+            DownloadType.LOG
+        )
+
     ## UTILS ##
 
     def start_task(self, task_id, startup_command):
@@ -138,6 +183,24 @@ class TaskManager:
 
         Database.start_task(task_id, { "dockerPid": process.pid })
 
+    def handle_upload(self, task_id, user_id, file_name, content, notification_type, download_type):
+        # Upload Data
+        S3.upload_data(task_id, content, file_name)
+
+        # Create Notification
+        Database.insert_new_task_notification(
+            task_id,
+            user_id,
+            notification_type
+        )
+
+        # Update Download entry
+        Database.update_download(
+            task_id, 
+            user_id, 
+            download_type
+        )
+
     ## SCHEDULING ## 
 
     def schedule_new_task(self):
@@ -145,9 +208,9 @@ class TaskManager:
 
         for scheduled_task in scheduled_tasks:
 
-            task = Database.get_task(scheduled_task["_id"])
+            task = Database.get_task(scheduled_task["taskId"])
 
-            Database.delete_scheduled_task(scheduled_task["_id"])
+            Database.delete_scheduled_task(scheduled_task["taskId"])
 
             if not task:
                 return
@@ -167,9 +230,9 @@ class TaskManager:
             return self.stop_task(task, TaskStatus.FINISHED)
 
         if type == ExecutableType.UPLOAD_DATA:
-            return 
+            return self.upload_data(task)
         if type == ExecutableType.UPLOAD_LOG:
-            return
+            return self.upload_log(task)
 
 
 if __name__ == "__main__":

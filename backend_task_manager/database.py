@@ -1,9 +1,9 @@
 from pymongo import MongoClient
 from bson import ObjectId
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from backend_task_manager.config import config
-from backend_task_manager.constants import TaskStatus
+from backend_task_manager.constants import TaskStatus, DownloadStatus
 
 
 client = MongoClient(config.get("DB_HOST"))
@@ -63,7 +63,7 @@ class Database:
     
     def delete_scheduled_task(id):
         db.scheduledTasks.delete_one({
-            "_id": ObjectId(id)
+            "taskId": ObjectId(id)
         })
 
     def get_task(task_id):
@@ -122,4 +122,36 @@ class Database:
             "createdAt": Database.utc_now(),
             "status": status,
             "read": False
+        })
+
+
+    #### DOWNLOADS
+
+    def update_download(task_id, user_id, type):
+        db.downloads.update_one({
+            "taskId": ObjectId(task_id),
+            "userId": ObjectId(user_id),
+            "type": type
+        }, {
+            "$set": {
+                "updatedAt": Database.utc_now(),
+                "status": DownloadStatus.READY,
+                "expiresAt": Database.utc_now() + timedelta(days=30)
+            }
+        })
+
+    def get_expired_downloads(now):
+        return list(
+            db.downloads.find({
+                "expiresAt": {
+                    "$lt": now
+                }
+            })
+        )
+    
+    def delete_expired_downloads(now):
+        db.downloads.delete_many({
+            "expiresAt": {
+                "$lt": now
+            }
         })

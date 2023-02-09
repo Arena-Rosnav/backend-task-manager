@@ -1,0 +1,11 @@
+[Unit]
+Description=Arena-Web Data-Cleanup
+Wants=cleanup.timer
+
+[Service]
+Type=oneshot
+WorkingDirectory=<WorkDir>
+ExecStart=<PythonDir> cleanup.py
+
+[Install]
+WantedBy=multi-user.target
