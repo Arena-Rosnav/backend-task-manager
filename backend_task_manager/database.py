@@ -62,9 +62,9 @@ class Database:
         if not task:
             return None
         
-        db.scheduledTasks.delete_one({
-            "_id": ObjectId(task["_id"])
-        })
+        # db.scheduledTasks.delete_one({
+        #     "_id": ObjectId(task["_id"])
+        # })
 
         return task
 

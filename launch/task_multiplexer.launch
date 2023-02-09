@@ -1,9 +1,0 @@
-<launch>
-  <node 
-    type="task_multiplexer.py" 
-    pkg="backend_task_manager" 
-    name="$(anon task_multiplexer)" 
-    output="screen"
-  />
-
-</launch>

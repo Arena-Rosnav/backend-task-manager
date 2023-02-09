@@ -1,17 +1,12 @@
 from dotenv import dotenv_values
 import os
-import rospkg
 
 from backend_task_manager.constants import Docker
 
 
 config = {
     **os.environ,
-    **dotenv_values(os.path.join(
-        rospkg.RosPack().get_path("backend_task_manager"),
-        ".env"
-    )),
-    "BASE_PATH": rospkg.RosPack().get_path("backend_task_manager")
+    **dotenv_values(".env")
 }
 
 default_robot_values = {

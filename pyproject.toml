@@ -6,12 +6,10 @@ authors = ["ReykCS <reyk-carstens@web.de>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-catkin-pkg = "^0.5.2"
 PyYAML = "^6.0"
-rospkg = "^1.4.0"
 pymongo = "^4.3.3"
 python-dotenv = "^0.21.1"
-netifaces = "^0.11.0"
+colorama = "^0.4.6"
 
 [tool.poetry.dev-dependencies]
 

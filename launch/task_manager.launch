@@ -1,9 +1,0 @@
-<launch>
-  <node 
-    type="task_manager.py" 
-    pkg="backend_task_manager" 
-    name="task_manager" 
-    output="screen"
-  />
-
-</launch>

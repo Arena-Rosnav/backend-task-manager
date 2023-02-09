@@ -1,5 +1,4 @@
 import os
-import rospy
 
 from backend_task_manager.constants import Docker, Type
 from backend_task_manager.config import config
