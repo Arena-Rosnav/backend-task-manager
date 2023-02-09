@@ -56,17 +56,14 @@ class Database:
             }
         })
 
-    def get_scheduled_task():
-        task = db.scheduledTasks.find_one({})
+    def get_scheduled_tasks():
+        tasks = list(db.scheduledTasks.find({}))
 
-        if not task:
-            return None
-        
         # db.scheduledTasks.delete_one({
         #     "_id": ObjectId(task["_id"])
         # })
 
-        return task
+        return tasks
 
     def get_task(task_id):
         return db.tasks.find_one({

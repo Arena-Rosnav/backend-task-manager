@@ -1,0 +1,11 @@
+[Unit]
+Description=Arena-Web Log-Updater
+Wants=log_updater.timer
+
+[Service]
+Type=oneshot
+WorkingDirectory=<WorkDir>
+ExecStart=<PythonDir> log_updater.py
+
+[Install]
+WantedBy=multi-user.target

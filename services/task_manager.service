@@ -1,0 +1,11 @@
+[Unit]
+Description=Arena-Web Task-Manager
+Wants=task_manager.timer
+
+[Service]
+Type=oneshot
+WorkingDirectory=<WorkDir>
+ExecStart=<PythonDir> task_manager.py
+
+[Install]
+WantedBy=multi-user.target

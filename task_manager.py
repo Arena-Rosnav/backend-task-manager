@@ -141,17 +141,16 @@ class TaskManager:
     ## SCHEDULING ## 
 
     def schedule_new_task(self):
-        scheduled_task = Database.get_scheduled_task()
+        scheduled_tasks = Database.get_scheduled_tasks()
 
-        if not scheduled_task:
-            return
+        for scheduled_task in scheduled_tasks:
 
-        task = Database.get_task(scheduled_task["_id"])
+            task = Database.get_task(scheduled_task["_id"])
 
-        if not task:
-            return
+            if not task:
+                return
 
-        self.multiplex_request(Task(task), scheduled_task["type"])
+            self.multiplex_request(Task(task), scheduled_task["type"])
 
     def multiplex_request(self, task, type):
         if type == ExecutableType.START_TRAINING:
@@ -165,8 +164,15 @@ class TaskManager:
         if type in [ExecutableType.FINISH_EVALUATION, ExecutableType.FINISH_TRAINING]:
             return self.stop_task(task, TaskStatus.FINISHED)
 
+        if type == ExecutableType.UPLOAD_DATA:
+            return 
+        if type == ExecutableType.UPLOAD_LOG:
+            return
+
 
 if __name__ == "__main__":
+    print("START TASK MANAGER")
+
     task_manager = TaskManager()
 
     task_manager.schedule_new_task()

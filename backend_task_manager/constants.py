@@ -18,6 +18,9 @@ class ExecutableType:
     ABORT_EVALUATION = "abort_evaluation"
     FINISH_EVALUATION = "finish_evaluation"
 
+    UPLOAD_DATA = "upload_data"
+    UPLOAD_LOG = "upload_log"
+
 
 class Docker:
     NAME_OF_MODEL = "robot"
