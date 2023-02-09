@@ -59,11 +59,12 @@ class Database:
     def get_scheduled_tasks():
         tasks = list(db.scheduledTasks.find({}))
 
-        # db.scheduledTasks.delete_one({
-        #     "_id": ObjectId(task["_id"])
-        # })
-
         return tasks
+    
+    def delete_scheduled_task(id):
+        db.scheduledTasks.delete_one({
+            "_id": ObjectId(id)
+        })
 
     def get_task(task_id):
         return db.tasks.find_one({

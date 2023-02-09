@@ -147,6 +147,8 @@ class TaskManager:
 
             task = Database.get_task(scheduled_task["_id"])
 
+            Database.delete_scheduled_task(scheduled_task["_id"])
+
             if not task:
                 return
 
