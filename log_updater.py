@@ -10,10 +10,15 @@ def update_logs():
     base_path = config["BASE_PATH"]
 
     for task in open_tasks:
-        if not os.path.exists(os.path.join(base_path, "data", str(task["_id"]), "output.txt")):
+        file_path = os.path.join(base_path, "data", str(task["_id"]), "output.txt")
+        
+        if (
+            not os.path.exists(file_path)
+            or not os.path.isfile(file_path)
+        ):
             continue
 
-        with open(os.path.join(base_path, "data", str(task["_id"]), "output.txt")) as file:
+        with open(file_path) as file:
             lines = file.readlines()
 
             last_lines = lines[-min([100, len(lines) - 1]):]

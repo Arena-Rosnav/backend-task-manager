@@ -89,6 +89,11 @@ class Database:
             }
         })
 
+    def get_running_tasks():
+        return db.tasks.count_documents({
+            "status": TaskStatus.RUNNING
+        })
+
 
     #### TASK PROCESS ##
 
@@ -155,3 +160,5 @@ class Database:
                 "$lt": now
             }
         })
+
+    

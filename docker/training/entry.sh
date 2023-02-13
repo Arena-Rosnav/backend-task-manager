@@ -15,6 +15,6 @@ roslaunch arena_bringup start_training.launch \
     new_best_model_endpoint:=$6 \
     model:=$1 &
 
-python3 src/arena-rosnav/training/scripts/train_agent.py --agent AGENT_22
+python3 src/arena-rosnav/training/scripts/train_agent.py --agent AGENT_22 >> /root/output.txt
 
 # docker run -v $(echo $ARENA_BENCHMARK)/backend_api/docker/evaluation:/root/startup -ti arena-rosnav  

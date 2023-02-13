@@ -17,6 +17,8 @@ def training_startup_command(user_id, task_id, robot):
         f"{robot_volume(base_path, task_id, robot['type'], robot.get('userId'))} "
         # For training configs
         f"-v {os.path.join(base_path, 'data', task_id, 'config', 'training_config.yaml')}:/root/src/arena-rosnav/training/configs/training_config.yaml "
+        # For output
+        f"-v {os.path.join(base_path, 'data', task_id, 'output.txt')}:/root/output.txt "
         f"-l {task_id} arena-rosnav ./startup/entry.sh {robot['name']} "
         # Arguments for entrypoint
         f"{default_entrypoint_params(task_id)} "
@@ -29,7 +31,7 @@ def training_startup_command(user_id, task_id, robot):
 
 def evaluation_startup_command(user_id, task_id, robot, planner):
     base_path = config["BASE_PATH"]
-    
+
     return (
         f"docker run -it --rm -d --name {task_id} --net=host "
         # For the entry file
@@ -40,6 +42,8 @@ def evaluation_startup_command(user_id, task_id, robot, planner):
         f"{planner_volume(base_path, user_id, task_id, robot, planner)} "
         # For data recording
         f"-v {os.path.join(base_path, 'data', user_id, task_id)}:/root/src/arena-evaluation/data "
+        # For output
+        f"-v {os.path.join(base_path, 'data', task_id, 'output.txt')}:/root/output.txt "
         f"-l {task_id} arena-rosnav ./startup/entry.sh "
         # Arguments for entrypoint
         f"{default_entrypoint_params(task_id)} "

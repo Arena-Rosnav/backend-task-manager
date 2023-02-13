@@ -205,17 +205,27 @@ class TaskManager:
 
     def schedule_new_task(self):
         scheduled_tasks = Database.get_scheduled_tasks()
+        running_tasks = Database.get_running_tasks()
 
         for scheduled_task in scheduled_tasks:
 
             task = Database.get_task(scheduled_task["taskId"])
 
-            Database.delete_scheduled_task(scheduled_task["taskId"])
-
             if not task:
                 return
+            
+            if (
+                scheduled_task["type"] in [ExecutableType.START_TRAINING, ExecutableType.START_EVALUATION]
+                and running_tasks >= 10
+            ): 
+                continue
 
-            self.multiplex_request(Task(task), scheduled_task["type"])
+            Database.delete_scheduled_task(scheduled_task["taskId"])
+
+            try:
+                self.multiplex_request(Task(task), scheduled_task["type"])
+            except:
+                pass
 
     def multiplex_request(self, task, type):
         if type == ExecutableType.START_TRAINING:

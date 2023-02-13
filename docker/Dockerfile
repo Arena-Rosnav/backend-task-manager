@@ -67,7 +67,7 @@ WORKDIR /root/src/
 RUN git clone https://github.com/Arena-Rosnav/arena-rosnav.git
 WORKDIR /root/src/arena-rosnav
 RUN git checkout -l
-RUN git checkout v0.1.4
+RUN git checkout v0.2.1
 
 RUN echo -e "source /opt/ros/noetic/setup.sh" >> /root/.bashrc
 RUN echo -e "source /root/devel/setup.sh" >> /root/.bashrc
