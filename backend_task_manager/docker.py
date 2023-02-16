@@ -1,7 +1,9 @@
 import os
+import subprocess
 
 from backend_task_manager.constants import Docker, Type
 from backend_task_manager.config import config
+from backend_task_manager.database import Database
 
 
 def training_startup_command(user_id, task_id, robot):
@@ -17,15 +19,10 @@ def training_startup_command(user_id, task_id, robot):
         f"{robot_volume(base_path, task_id, robot['type'], robot.get('userId'))} "
         # For training configs
         f"-v {os.path.join(base_path, 'data', task_id, 'config', 'training_config.yaml')}:/root/src/arena-rosnav/training/configs/training_config.yaml "
-        # For output
-        f"-v {os.path.join(base_path, 'data', task_id, 'output.txt')}:/root/output.txt "
-        f"-l {task_id} arena-rosnav ./startup/entry.sh {robot['name']} "
+        f"-l {task_id} arena-rosnav ./startup/entry.sh "
         # Arguments for entrypoint
         f"{default_entrypoint_params(task_id)} "
-        f"{config['FINISH_TASK_ENDPOINT']} {config['NEW_BEST_MODEL_ENDPOINT']} "
-        f"{robot['name']} "
-        # Pipe output in file
-        f">> {os.path.join(base_path, 'data', task_id, 'output.txt')}"
+        f"{config['FINISH_TASK_ENDPOINT']} {config['NEW_BEST_MODEL_ENDPOINT']} {robot['name']}"
     )
 
 
@@ -42,14 +39,10 @@ def evaluation_startup_command(user_id, task_id, robot, planner):
         f"{planner_volume(base_path, user_id, task_id, robot, planner)} "
         # For data recording
         f"-v {os.path.join(base_path, 'data', user_id, task_id)}:/root/src/arena-evaluation/data "
-        # For output
-        f"-v {os.path.join(base_path, 'data', task_id, 'output.txt')}:/root/output.txt "
         f"-l {task_id} arena-rosnav ./startup/entry.sh "
         # Arguments for entrypoint
         f"{default_entrypoint_params(task_id)} "
         f"{config['FINISH_TASK_ENDPOINT']} {robot['name']} "
-        # Pipe output in file
-        f">> {os.path.join(base_path, 'data', task_id, 'output.txt')}"
     )
 
 
@@ -84,3 +77,16 @@ def robot_volume(base_path, task_id, robot_access_type, robot_user_id):
         return ""
 
     return f"-v {os.path.join(base_path, 'data', task_id, 'robot')}:/root/src/utils/arena-simulation-setup/robot/{Docker.NAME_OF_MODEL} "
+
+
+def get_docker_logs(task_id, amount=100):
+    return subprocess.check_output([f"docker logs {str(task_id)} | tail -n {amount}"], shell=True)
+
+
+def update_task_logs(task_id):
+    try:
+        logs = get_docker_logs(task_id)
+
+        Database.update_task_log(task_id, bytes.decode(logs))
+    except:
+        pass

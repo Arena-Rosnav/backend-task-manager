@@ -4,6 +4,7 @@ class TaskType:
 
 
 class TaskStatus:
+    PENDING = "pending"
     RUNNING = "running"
     ABORTED = "aborted"
     FINISHED = "finished"

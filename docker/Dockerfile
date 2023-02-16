@@ -62,12 +62,14 @@ RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
 RUN sed -Ei -e '/^([^#]|$)/ {a export PYENV_ROOT="$HOME/.pyenv" \nexport PATH="$PYENV_ROOT/bin:$PATH"' -e ':a' -e '$!{n;ba};}' /root/.profile
 RUN echo 'eval "$(pyenv init --path)"' >> /root/.profile
 
+RUN pip install scipy PyQt5 empy defusedxml wandb
+
 RUN mkdir -p /root/src/
 WORKDIR /root/src/
 RUN git clone https://github.com/Arena-Rosnav/arena-rosnav.git
 WORKDIR /root/src/arena-rosnav
 RUN git checkout -l
-RUN git checkout v0.2.1
+RUN git checkout v0.2.2
 
 RUN echo -e "source /opt/ros/noetic/setup.sh" >> /root/.bashrc
 RUN echo -e "source /root/devel/setup.sh" >> /root/.bashrc
@@ -82,10 +84,5 @@ RUN source /root/.bashrc \
 
 WORKDIR /root/src/utils/stable-baselines3
 RUN pip install -e .
-
-RUN pip install scipy PyQt5 empy defusedxml 
-RUN pip install wandb
-
-# roslaunch arena_bringup start_arena.launch visualization:=none >> output.txt
 
 WORKDIR /root/

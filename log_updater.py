@@ -1,29 +1,22 @@
-import os
+import subprocess
 
 from backend_task_manager.database import Database
-from backend_task_manager.config import config
+from backend_task_manager.docker import update_task_logs
 
 
 def update_logs():
     open_tasks = Database.get_open_tasks()
 
-    base_path = config["BASE_PATH"]
-
     for task in open_tasks:
-        file_path = os.path.join(base_path, "data", str(task["_id"]), "output.txt")
-        
-        if (
-            not os.path.exists(file_path)
-            or not os.path.isfile(file_path)
-        ):
-            continue
+        try:
+            is_running = subprocess.check_output([f"docker ps -a | grep {str(task['_id'])}"], shell=True)
 
-        with open(file_path) as file:
-            lines = file.readlines()
+            if not is_running:
+                continue
 
-            last_lines = lines[-min([100, len(lines) - 1]):]
-
-            Database.update_task_log(task["_id"], last_lines)
+            update_task_logs(task["_id"])
+        except:
+            pass
 
 
 if __name__ == "__main__":

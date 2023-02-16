@@ -13,8 +13,8 @@ roslaunch arena_bringup start_training.launch \
     app_token_key:=$2 app_token:=$3 \
     base_url:=$4 task_finished_endpoint:=$5 \
     new_best_model_endpoint:=$6 \
-    model:=$1 &
+    model:=$7 &
 
-python3 src/arena-rosnav/training/scripts/train_agent.py --agent AGENT_22 >> /root/output.txt
+python3 src/arena-rosnav/training/scripts/train_agent.py --agent AGENT_22
 
 # docker run -v $(echo $ARENA_BENCHMARK)/backend_api/docker/evaluation:/root/startup -ti arena-rosnav  

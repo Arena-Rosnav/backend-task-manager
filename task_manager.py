@@ -2,14 +2,13 @@ from pymongo.database import Database
 import os
 import subprocess
 from colorama import Fore, Style
-import signal
 import traceback
 
 from backend_task_manager.database import Database
 from backend_task_manager.file_creator import FileCreator
 from backend_task_manager.config import config
 from backend_task_manager.constants import TaskStatus, NotificationType, ExecutableType, DownloadType
-from backend_task_manager.docker import training_startup_command, evaluation_startup_command
+from backend_task_manager.docker import training_startup_command, evaluation_startup_command, update_task_logs
 import backend_task_manager.utils as utils
 from backend_task_manager.s3 import S3
 
@@ -40,7 +39,7 @@ class Task:
 
 
 class TaskManager:
-    def start_training_callback(self, task):
+    def start_training(self, task):
         print(colored(Fore.GREEN, "[START]"), colored(Fore.BLUE, "[TRAINING]"), task.name)
 
         # Get task from Database
@@ -65,8 +64,6 @@ class TaskManager:
         # file_creator.create_network_architecture_file(network_architecture)
 
         startup_command = training_startup_command(task.user_id, task.task_id, robot)
-
-        print(startup_command)
 
         self.start_task(task.task_id, startup_command)
 
@@ -116,11 +113,16 @@ class TaskManager:
     def stop_task(self, task, status):
         print(colored(Fore.RED, f"[{status.upper()}]"), task.name)
         
-        pid = task.docker_pid
-
         try:
+            update_task_logs(task.task_id)
+
+            subprocess.Popen([
+                f"docker logs "
+                f"{task.task_id} > "
+                f"{os.path.join(config['BASE_PATH'], 'data', task.task_id, 'output.txt')}"
+            ], shell=True)
+
             subprocess.Popen([f"docker stop {task.task_id}"], shell=True)
-            os.killpg(os.getpgid(pid), signal.SIGTERM)
 
             Database.update_task(
                 task.task_id, 
@@ -132,10 +134,11 @@ class TaskManager:
     ## UPLOAD DATA ##
 
     def upload_data(self, task):
+        if task.status in [TaskStatus.RUNNING, TaskStatus.PENDING]:
+            print(colored(Fore.RED, "[UPLOAD]"), "Cannot upload when not completed")
+
         dir_path = os.path.join(config["BASE_PATH"], "data", task.user_id, task.task_id)
         
-        print(dir_path)
-
         if not os.path.exists(dir_path):
             return
 
@@ -153,15 +156,18 @@ class TaskManager:
         )
 
     def upload_log(self, task):
+        if task.status in [TaskStatus.RUNNING, TaskStatus.PENDING]:
+            print(colored(Fore.RED, "[UPLOAD]"), "Cannot upload when not completed")
+
         file_path = os.path.join(config["BASE_PATH"], "data", task.task_id, "output.txt")
 
         if not os.path.exists(file_path):
             return
-        
-        print(colored(Fore.BLUE, "[UPLOAD]"), colored(Fore.YELLOW, "[LOG]"), task.name)
-        
+    
         with open(file_path) as f:
             content = f.read()
+        
+        print(colored(Fore.BLUE, "[UPLOAD]"), colored(Fore.YELLOW, "[LOG]"), task.name)
 
         self.handle_upload(
             task.task_id,
@@ -208,6 +214,7 @@ class TaskManager:
         running_tasks = Database.get_running_tasks()
 
         for scheduled_task in scheduled_tasks:
+            is_startup_task = scheduled_task["type"] in [ExecutableType.START_TRAINING, ExecutableType.START_EVALUATION]
 
             task = Database.get_task(scheduled_task["taskId"])
 
@@ -215,7 +222,7 @@ class TaskManager:
                 return
             
             if (
-                scheduled_task["type"] in [ExecutableType.START_TRAINING, ExecutableType.START_EVALUATION]
+                is_startup_task
                 and running_tasks >= 10
             ): 
                 continue
@@ -225,7 +232,15 @@ class TaskManager:
             try:
                 self.multiplex_request(Task(task), scheduled_task["type"])
             except:
-                pass
+                if is_startup_task:
+                    Database.update_task(
+                        task["_id"],
+                        {
+                            "status": TaskStatus.ABORTED
+                        }
+                    )
+
+                traceback.print_exc()
 
     def multiplex_request(self, task, type):
         if type == ExecutableType.START_TRAINING:
@@ -246,8 +261,6 @@ class TaskManager:
 
 
 if __name__ == "__main__":
-    print("START TASK MANAGER")
-
     task_manager = TaskManager()
 
     task_manager.schedule_new_task()
