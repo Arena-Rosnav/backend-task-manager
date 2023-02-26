@@ -13,24 +13,25 @@ db = client.arena_benchmark
 
 class Database:
     #### GETTERS ##
-    
+
     def get_reward_from_id(reward_id):
-        reward = db.rewards.find_one({ "_id": ObjectId(reward_id) })
+        reward = db.rewards.find_one({"_id": ObjectId(reward_id)})
 
         return reward
 
     def get_robot_from_id(robot_id):
-        robot = db.robots.find_one({ "_id": ObjectId(robot_id) })
+        robot = db.robots.find_one({"_id": ObjectId(robot_id)})
 
         return robot
 
     def get_hyperparams_from_id(hyperparams_id):
-        hyperparams = db.hyperparams.find_one({ "_id": ObjectId(hyperparams_id) })
+        hyperparams = db.hyperparams.find_one(
+            {"_id": ObjectId(hyperparams_id)})
 
         return hyperparams
-    
+
     def get_planner_from_id(planner_id):
-        planner = db.planners.find_one({ "_id": ObjectId(planner_id) })
+        planner = db.planners.find_one({"_id": ObjectId(planner_id)})
 
         return planner
 
@@ -43,13 +44,22 @@ class Database:
 
         return network_architecture
 
+    def get_map_from_id(map_id):
+        map = db.maps.find_one({"_id": ObjectId(map_id)})
+
+        return map
+
+    def get_scenario_from_id(scenario_id):
+        scenario = db.scenarios.find_one({"_id": ObjectId(scenario_id)})
+
+        return scenario
 
     #### TASKS ##
 
     def update_task(task_id, update):
         db.tasks.update_one({
             "_id": ObjectId(task_id)
-        },{
+        }, {
             "$set": {
                 **update,
                 "updatedAt": Database.utc_now()
@@ -60,7 +70,7 @@ class Database:
         tasks = list(db.scheduledTasks.find({}))
 
         return tasks
-    
+
     def delete_scheduled_task(id):
         db.scheduledTasks.delete_one({
             "taskId": ObjectId(id)
@@ -77,7 +87,7 @@ class Database:
         }, {
             "_id": True
         })
-    
+
     def start_task(task_id, additional_args):
         db.tasks.update_one({
             "_id": ObjectId(task_id)
@@ -93,7 +103,6 @@ class Database:
         return db.tasks.count_documents({
             "status": TaskStatus.RUNNING
         })
-
 
     #### TASK PROCESS ##
 
@@ -111,14 +120,12 @@ class Database:
             upsert=True
         )
 
-
-    #### UTILS ## 
+    #### UTILS ##
 
     def utc_now():
         return datetime.now(timezone.utc)
 
-
-    #### NOTIFICATIONS
+    # NOTIFICATIONS
 
     def insert_new_task_notification(task_id, user_id, status):
         db.notifications.insert_one({
@@ -129,8 +136,7 @@ class Database:
             "read": False
         })
 
-
-    #### DOWNLOADS
+    # DOWNLOADS
 
     def update_download(task_id, user_id, type):
         db.downloads.update_one({
@@ -153,12 +159,10 @@ class Database:
                 }
             })
         )
-    
+
     def delete_expired_downloads(now):
         db.downloads.delete_many({
             "expiresAt": {
                 "$lt": now
             }
         })
-
-    
