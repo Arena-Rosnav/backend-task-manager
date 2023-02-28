@@ -6,9 +6,9 @@ from backend_task_manager.config import config
 from backend_task_manager.database import Database
 
 
-def training_startup_command(user_id, task_id, robot):
+def training_startup_command(user_id, task_id, robot, map):
     base_path = config["BASE_PATH"]
-    
+
     return (
         f"docker run -it --rm -d --name {task_id} "
         # For the entry file
@@ -17,6 +17,8 @@ def training_startup_command(user_id, task_id, robot):
         f"-v {os.path.join(base_path, 'data', user_id, task_id)}:/root/src/planners/rosnav/agents "
         # For robot model
         f"{robot_volume(base_path, task_id, robot['type'], robot.get('userId'))} "
+        # For map
+        f"{map_volume(base_path, task_id, map['type'], map.get('userId'))} "
         # For training configs
         f"-v {os.path.join(base_path, 'data', task_id, 'config', 'training_config.yaml')}:/root/src/arena-rosnav/training/configs/training_config.yaml "
         f"-l {task_id} arena-rosnav ./startup/entry.sh "
@@ -56,9 +58,10 @@ def planner_volume(base_path, user_id, task_id, robot, planner):
     if not planner.get("userId"):
         return ""
 
-    model_base_path = os.path.join(base_path, 'data', user_id, str(planner["fromTask"]))
+    model_base_path = os.path.join(
+        base_path, 'data', user_id, str(planner["fromTask"]))
 
-    ## agent name defaults to robot model name.
+    # agent name defaults to robot model name.
     # set the agents directory to the robots dir
     agent_dir = [f.path for f in os.scandir(model_base_path) if f.is_dir()][0]
 
@@ -69,14 +72,22 @@ def default_entrypoint_params(task_id):
     return f"{task_id} {config['APP_TOKEN_KEY']} {config['APP_TOKEN']} {config['API_BASE_URL']} "
 
 
-
 def robot_volume(base_path, task_id, robot_access_type, robot_user_id):
-    ## If the robot is Public and no user created it, it is a default robot and
+    # If the robot is Public and no user created it, it is a default robot and
     # Therefore already included in our arena-simulation-setup repo
     if robot_access_type == Type.PUBLIC and robot_user_id == None:
         return ""
 
     return f"-v {os.path.join(base_path, 'data', task_id, 'robot')}:/root/src/utils/arena-simulation-setup/robot/{Docker.NAME_OF_MODEL} "
+
+
+def map_volume(base_path, task_id, map_access_type, map_user_id):
+    # If the map is Public and no user created it, it is a default map and
+    # Therefore already included in our arena-simulation-setup repo
+    if map_access_type == Type.PUBLIC and map_user_id == None:
+        return ""
+
+    return f"-v {os.path.join(base_path, 'data', task_id, 'maps')}:/root/src/utils/arena-simulation-setup/maps/{Docker.NAME_OF_MAP} "
 
 
 def get_docker_logs(task_id, amount=100):

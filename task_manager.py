@@ -32,6 +32,8 @@ class Task:
         self.robot_id = str(task.get("robotId"))
         self.hyperparams_id = str(task.get("hyperparamsId"))
         self.planner_id = str(task.get("plannerId"))
+        self.scenario_id = str(task.get("scenarioId"))
+        self.map_id = str(task.get("mapId"))
 
         # Docker Pid
 
@@ -40,7 +42,8 @@ class Task:
 
 class TaskManager:
     def start_training(self, task):
-        print(colored(Fore.GREEN, "[START]"), colored(Fore.BLUE, "[TRAINING]"), task.name)
+        print(colored(Fore.GREEN, "[START]"), colored(
+            Fore.BLUE, "[TRAINING]"), task.name)
 
         # Get task from Database
         # reward = Database.get_reward_from_id(task.reward_id)
@@ -49,32 +52,37 @@ class TaskManager:
         # network_architecture = Database.get_network_architecture_from_id(
         #      task.network_architecture_id
         # )
+        map = Database.get_map_from_id(task.map_id)
 
-        ## Check if necessary task is set
+        # Check if necessary task is set
         utils.check_parameters(
-            # reward, 
-            robot, 
-            hyperparams
+            # reward,
+            robot,
+            hyperparams,
             # network_architecture,
+            map
         )
-        
+
         file_creator = FileCreator(task.task_id, task.user_id)
         file_creator.create_robot_file(robot)
         file_creator.create_hyperparams_file(hyperparams)
+        file_creator.create_map_file(map)
         # file_creator.create_network_architecture_file(network_architecture)
 
-        startup_command = training_startup_command(task.user_id, task.task_id, robot)
+        startup_command = training_startup_command(
+            task.user_id, task.task_id, robot, map)
 
         self.start_task(task.task_id, startup_command)
 
         Database.insert_new_task_notification(
-            task.task_id, 
-            task.user_id, 
+            task.task_id,
+            task.user_id,
             NotificationType.TRAINING_STARTED
         )
 
     def start_evaluation(self, task):
-        print(colored(Fore.GREEN, "[START]"), colored(Fore.MAGENTA, "[EVALUATION]"), task.name)
+        print(colored(Fore.GREEN, "[START]"), colored(
+            Fore.MAGENTA, "[EVALUATION]"), task.name)
 
         # Get task from Database
         # reward = Database.get_reward_from_id(task.reward_id)
@@ -83,21 +91,22 @@ class TaskManager:
         # network_architecture = Database.get_network_architecture_from_id(
         #      task.network_architecture_id
         # )
+        scenario = Database.get_scenario_from_id(task.scenario_id)
 
-        ## Check if necessary task is set
+        # Check if necessary task is set
         utils.check_parameters(
-            # reward, 
-            robot, 
+            # reward,
+            robot,
             # network_architecture,
         )
-        
+
         file_creator = FileCreator(task.task_id, task.user_id)
         file_creator.create_robot_file(robot)
         # file_creator.create_network_architecture_file(network_architecture)
 
         startup_command = evaluation_startup_command(
-            task.user_id, 
-            task.task_id, 
+            task.user_id,
+            task.task_id,
             robot,
             planner
         )
@@ -105,14 +114,14 @@ class TaskManager:
         self.start_task(task.task_id, startup_command)
 
         Database.insert_new_task_notification(
-            task.task_id, 
-            task.user_id, 
+            task.task_id,
+            task.user_id,
             NotificationType.EVALUATION_STARTED
         )
 
     def stop_task(self, task, status):
         print(colored(Fore.RED, f"[{status.upper()}]"), task.name)
-        
+
         try:
             update_task_logs(task.task_id)
 
@@ -125,8 +134,8 @@ class TaskManager:
             subprocess.Popen([f"docker stop {task.task_id}"], shell=True)
 
             Database.update_task(
-                task.task_id, 
-                { "status": status, "updatedAt": Database.utc_now() }
+                task.task_id,
+                {"status": status, "updatedAt": Database.utc_now()}
             )
         except:
             traceback.print_exc()
@@ -135,14 +144,17 @@ class TaskManager:
 
     def upload_data(self, task):
         if task.status in [TaskStatus.RUNNING, TaskStatus.PENDING]:
-            print(colored(Fore.RED, "[UPLOAD]"), "Cannot upload when not completed")
+            print(colored(Fore.RED, "[UPLOAD]"),
+                  "Cannot upload when not completed")
 
-        dir_path = os.path.join(config["BASE_PATH"], "data", task.user_id, task.task_id)
-        
+        dir_path = os.path.join(
+            config["BASE_PATH"], "data", task.user_id, task.task_id)
+
         if not os.path.exists(dir_path):
             return
 
-        print(colored(Fore.BLUE, "[UPLOAD]"), colored(Fore.CYAN, "[DATA]"), task.name)
+        print(colored(Fore.BLUE, "[UPLOAD]"),
+              colored(Fore.CYAN, "[DATA]"), task.name)
 
         file_content = utils.get_dir_as_zip(dir_path)
 
@@ -157,17 +169,20 @@ class TaskManager:
 
     def upload_log(self, task):
         if task.status in [TaskStatus.RUNNING, TaskStatus.PENDING]:
-            print(colored(Fore.RED, "[UPLOAD]"), "Cannot upload when not completed")
+            print(colored(Fore.RED, "[UPLOAD]"),
+                  "Cannot upload when not completed")
 
-        file_path = os.path.join(config["BASE_PATH"], "data", task.task_id, "output.txt")
+        file_path = os.path.join(
+            config["BASE_PATH"], "data", task.task_id, "output.txt")
 
         if not os.path.exists(file_path):
             return
-    
+
         with open(file_path) as f:
             content = f.read()
-        
-        print(colored(Fore.BLUE, "[UPLOAD]"), colored(Fore.YELLOW, "[LOG]"), task.name)
+
+        print(colored(Fore.BLUE, "[UPLOAD]"), colored(
+            Fore.YELLOW, "[LOG]"), task.name)
 
         self.handle_upload(
             task.task_id,
@@ -182,12 +197,12 @@ class TaskManager:
 
     def start_task(self, task_id, startup_command):
         process = subprocess.Popen(
-            [startup_command], 
-            shell=True, 
+            [startup_command],
+            shell=True,
             preexec_fn=os.setsid,
         )
 
-        Database.start_task(task_id, { "dockerPid": process.pid })
+        Database.start_task(task_id, {"dockerPid": process.pid})
 
     def handle_upload(self, task_id, user_id, file_name, content, notification_type, download_type):
         # Upload Data
@@ -202,29 +217,30 @@ class TaskManager:
 
         # Update Download entry
         Database.update_download(
-            task_id, 
-            user_id, 
+            task_id,
+            user_id,
             download_type
         )
 
-    ## SCHEDULING ## 
+    ## SCHEDULING ##
 
     def schedule_new_task(self):
         scheduled_tasks = Database.get_scheduled_tasks()
         running_tasks = Database.get_running_tasks()
 
         for scheduled_task in scheduled_tasks:
-            is_startup_task = scheduled_task["type"] in [ExecutableType.START_TRAINING, ExecutableType.START_EVALUATION]
+            is_startup_task = scheduled_task["type"] in [
+                ExecutableType.START_TRAINING, ExecutableType.START_EVALUATION]
 
             task = Database.get_task(scheduled_task["taskId"])
 
             if not task:
                 return
-            
+
             if (
                 is_startup_task
                 and running_tasks >= 10
-            ): 
+            ):
                 continue
 
             Database.delete_scheduled_task(scheduled_task["taskId"])
