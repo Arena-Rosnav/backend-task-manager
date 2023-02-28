@@ -164,7 +164,7 @@ class FileCreator:
     def create_scenario_file(self, scenario_data):
         pass
 
-    def create_map_files(self, map_data):
+    def create_map_file(self, map_data):
 
-        self._write_png(self, map_data["mapImg"], "map", "/maps/custom")
-        self._write_yaml(self, map_data, "map", "/maps/custom")
+        self._write_png(map_data["mapImg"], "map", self.task_id, "maps")
+        self._write_yaml(map_data, "map", self.task_id, "maps")
