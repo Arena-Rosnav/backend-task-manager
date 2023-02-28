@@ -43,7 +43,7 @@ default_robot_values = {
 }
 
 
-default_global_costmap = lambda robot_radius: {
+def default_global_costmap(robot_radius): return {
     "global_frame": "map",
     "robot_base_frame": Docker.ROBOT_BASE_FRAME,
     "static_map": True,
@@ -52,9 +52,9 @@ default_global_costmap = lambda robot_radius: {
     "obstacle_range": 2.5,
     "raytrace_range": 3.0,
     "footprint": [
-        [robot_radius, robot_radius], 
-        [robot_radius, -robot_radius], 
-        [-robot_radius, -robot_radius], 
+        [robot_radius, robot_radius],
+        [robot_radius, -robot_radius],
+        [-robot_radius, -robot_radius],
         [-robot_radius, robot_radius]
     ],
     "footprint_padding": 0.1,
@@ -73,7 +73,7 @@ default_global_costmap = lambda robot_radius: {
 }
 
 
-default_local_costmap = lambda robot_radius: {
+def default_local_costmap(robot_radius): return {
     "global_frame": "odom",
     "robot_base_frame": Docker.ROBOT_BASE_FRAME,
     "update_frequency": 5.0,
@@ -87,9 +87,9 @@ default_local_costmap = lambda robot_radius: {
     "obstacle_range": 2.5,
     "raytrace_range": 3.0,
     "footprint": [
-        [robot_radius, robot_radius], 
-        [robot_radius, -robot_radius], 
-        [-robot_radius, -robot_radius], 
+        [robot_radius, robot_radius],
+        [robot_radius, -robot_radius],
+        [-robot_radius, -robot_radius],
         [-robot_radius, robot_radius]
     ],
     "footprint_padding": 0.1,
@@ -124,7 +124,7 @@ default_hyperparam_values = {
     "goal_radius": 0.3,
 
     "callbacks": {
-        "periodic_eval":{
+        "periodic_eval": {
             "max_num_moves_per_eps": 350,
             "n_eval_episodes": 100,
             "eval_freq": 15000
@@ -138,19 +138,19 @@ default_hyperparam_values = {
             "lower_threshold": 0.6
         },
 
-        "stop_training":{
+        "stop_training": {
             "threshold_type": "succ",
             "threshold": 0.9
         }
     },
 
-    "rl_agent":{
+    "rl_agent": {
         "architecture_name": "AGENT_25",
         "reward_fnc": "rule_05",
         "resume": None,
         "discrete_action_space": False,
         "normalize": False,
-        "ppo":{
+        "ppo": {
             "batch_size": 9600,
             "gamma": 0.99,
             "n_steps": 1200,
@@ -163,5 +163,17 @@ default_hyperparam_values = {
             "n_epochs": 3,
             "clip_range": 0.22,
         }
+    }
+}
+
+default_map_world_values = {
+    "properties": {
+        "velocity_iterations": 10,
+        "position_iterations": 10
+    },
+    "layers": {
+        "name": "static",
+        "map": "map.yaml",
+        "color": [0, 1, 0, 1]
     }
 }

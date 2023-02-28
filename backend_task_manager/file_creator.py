@@ -10,7 +10,8 @@ from backend_task_manager.config import (
     default_hyperparam_values,
     config,
     default_global_costmap,
-    default_local_costmap
+    default_local_costmap,
+    default_map_world_values
 )
 
 from backend_task_manager.constants import Docker, Type
@@ -166,5 +167,7 @@ class FileCreator:
 
     def create_map_file(self, map_data):
 
+        map_world_file = default_map_world_values
+        self._write_yaml(map_world_file, "map.world", self.task_id, "maps")
         self._write_png(map_data["mapImg"], "map", self.task_id, "maps")
         self._write_yaml(map_data, "map", self.task_id, "maps")
