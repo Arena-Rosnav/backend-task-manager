@@ -13,7 +13,7 @@ roslaunch arena_bringup start_training.launch \
     app_token_key:=$2 app_token:=$3 \
     base_url:=$4 task_finished_endpoint:=$5 \
     new_best_model_endpoint:=$6 \
-    model:=$7 &
+    model:=$7 map_folder_name:=map &
 
 python3 src/arena-rosnav/training/scripts/train_agent.py --agent AGENT_22
 

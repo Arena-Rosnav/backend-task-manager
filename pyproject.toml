@@ -11,6 +11,8 @@ pymongo = "^4.3.3"
 python-dotenv = "^0.21.1"
 colorama = "^0.4.6"
 boto3 = "^1.26.67"
+pypng = "^0.20220715.0"
+Pillow = "^9.4.0"
 
 [tool.poetry.dev-dependencies]
 
