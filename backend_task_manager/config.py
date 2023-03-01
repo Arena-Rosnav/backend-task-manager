@@ -171,9 +171,19 @@ default_map_world_values = {
         "velocity_iterations": 10,
         "position_iterations": 10
     },
-    "layers": {
-        "name": "static",
-        "map": "map.yaml",
-        "color": [0, 1, 0, 1]
-    }
+    "layers": [
+        {
+            "name": "static",
+            "map": "map.yaml",
+            "color": [0, 1, 0, 1]
+        }
+    ]
+}
+
+default_map_values = {
+    "free_thresh": 0.196,
+    "image": "map.png",
+    "negate": 0,
+    "occupied_thresh": 0.65,
+    "origin": [0, 0, 0],
 }

@@ -3,7 +3,7 @@ import os
 import json
 import base64
 from io import BytesIO
-import png
+from PIL import Image
 
 from backend_task_manager.config import (
     default_robot_values,
@@ -11,6 +11,7 @@ from backend_task_manager.config import (
     config,
     default_global_costmap,
     default_local_costmap,
+    default_map_values,
     default_map_world_values
 )
 
@@ -42,14 +43,14 @@ class FileCreator:
         with open(os.path.join(config["BASE_PATH"], "data", id, name + ".json"), "w") as f:
             json.dump(data, f)
 
-    def _write_png(self, data, name, id, additional_paths=""):
-        img_data = base64.b64decode(data)
+    def _write_png(self, data, id, additional_paths=""):
+        img_data = base64.b64decode(data["mapImg"])
+
         self._create_dir(id, additional_paths)
 
-        with open(os.path.join(config["BASE_PATH"], "data", id, additional_paths, name + ".png"), "w") as f:
-            writer = png.Writer(
-                width=img_data.shape[1], height=img_data.shape[0], greyscale=True)
-            writer.write(f, BytesIO(img_data).getvalue())
+        with open(os.path.join(config["BASE_PATH"], "data", id, additional_paths, "map.png"), "wb") as f:
+            img = Image.open(BytesIO(img_data))
+            img.save(f)
 
     def create_reward_file(self, reward_data):
         pass
@@ -166,8 +167,15 @@ class FileCreator:
         pass
 
     def create_map_file(self, map_data):
-
         map_world_file = default_map_world_values
+
         self._write_yaml(map_world_file, "map.world", self.task_id, "maps")
-        self._write_png(map_data["mapImg"], "map", self.task_id, "maps")
-        self._write_yaml(map_data, "map", self.task_id, "maps")
+        self._write_png(map_data, self.task_id, "maps")
+
+        map_file = {
+            **default_map_values,
+            "resolution": map_data["resolution"],
+            "type": map_data["type"]
+        }
+
+        self._write_yaml(map_file, "map", self.task_id, "maps")

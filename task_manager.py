@@ -71,6 +71,8 @@ class TaskManager:
 
         startup_command = training_startup_command(
             task.user_id, task.task_id, robot, map)
+        
+        print(startup_command)
 
         self.start_task(task.task_id, startup_command)
 
@@ -243,7 +245,7 @@ class TaskManager:
             ):
                 continue
 
-            Database.delete_scheduled_task(scheduled_task["taskId"])
+            # Database.delete_scheduled_task(scheduled_task["taskId"])
 
             try:
                 self.multiplex_request(Task(task), scheduled_task["type"])
