@@ -36,7 +36,7 @@ class Database:
         return planner
 
     def get_network_architecture_from_id(network_architecture_id):
-        network_architecture = db.network_architecture.find_one(
+        network_architecture = db.network_architectures.find_one(
             {
                 "_id": ObjectId(network_architecture_id)
             }

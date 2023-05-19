@@ -10,7 +10,9 @@ def training_startup_command(user_id, task_id, robot, map):
     base_path = config["BASE_PATH"]
 
     return (
-        f"docker run -it --rm -d --name {task_id} "
+        # -it for interactive bash shell -d for detached mode (seperate from current terminal session)
+        # f"docker run -it --rm -d --name {task_id} "
+        f"docker run -it --rm --name {task_id} "
         # For the entry file
         f"-v {os.path.join(base_path, 'docker', 'training')}:/root/startup "
         # For created agent
@@ -22,6 +24,8 @@ def training_startup_command(user_id, task_id, robot, map):
         # For training configs
         f"-v {os.path.join(base_path, 'data', task_id, 'config', 'training_config.yaml')}:/root/src/arena-rosnav/training/configs/training_config.yaml "
         f"-l {task_id} arena-rosnav ./startup/entry.sh "
+        # For network
+        f"{network_volume(base_path, task_id)} "
         # Arguments for entrypoint
         f"{default_entrypoint_params(task_id)} "
         f"{config['FINISH_TASK_ENDPOINT']} {config['NEW_BEST_MODEL_ENDPOINT']} {robot['name']}"
@@ -88,6 +92,11 @@ def map_volume(base_path, task_id, map_access_type, map_user_id):
         return ""
 
     return f"-v {os.path.join(base_path, 'data', task_id, 'maps')}:/root/src/utils/arena-simulation-setup/maps/{Docker.NAME_OF_MAP} "
+
+
+def network_volume(base_path, task_id):
+    # Puts created file from file_creator.py into docker container
+    return f"-v {os.path.join(base_path, 'data', task_id, 'network')}:/root/planners/rosnav/agents/{Docker.NAME_OF_NETWORK}"
 
 
 def get_docker_logs(task_id, amount=100):

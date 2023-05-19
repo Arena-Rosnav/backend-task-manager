@@ -39,7 +39,10 @@ class FileCreator:
         with open(os.path.join(config["BASE_PATH"], "data", id, additional_paths, name + ".yaml"), "w") as f:
             yaml.dump(data, f)
 
-    def _write_json(self, data, name, id):
+    def _write_json(self, data, name, id, additional_paths=""):
+        self._create_dir(id, additional_paths)
+        print(data)
+
         with open(os.path.join(config["BASE_PATH"], "data", id, name + ".json"), "w") as f:
             json.dump(data, f)
 
@@ -160,15 +163,18 @@ class FileCreator:
                          self.task_id, "config")
 
     def create_network_architecture_file(self, network_architecture_data):
-        self._write_json(network_architecture_data, "network_architecture")
-        pass
+        network_file = {}
+        network_file["name"] = network_architecture_data["name"]
+        network_file["policy"] = network_architecture_data["policy"]
+        print(network_file)
+        self._write_json(network_file,
+                         "network_architecture", "network")
 
     def create_scenario_file(self, scenario_data):
         pass
 
     def create_map_file(self, map_data):
         map_world_file = default_map_world_values
-
         self._write_yaml(map_world_file, "map.world", self.task_id, "maps")
         self._write_png(map_data, self.task_id, "maps")
 

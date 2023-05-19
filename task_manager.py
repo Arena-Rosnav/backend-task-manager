@@ -34,6 +34,7 @@ class Task:
         self.planner_id = str(task.get("plannerId"))
         self.scenario_id = str(task.get("scenarioId"))
         self.map_id = str(task.get("mapId"))
+        self.network_architecture_id = str(task.get("networkArchitectureId"))
 
         # Docker Pid
 
@@ -47,11 +48,13 @@ class TaskManager:
 
         # Get task from Database
         # reward = Database.get_reward_from_id(task.reward_id)
+        print("vars")
+        print(vars(task))
         robot = Database.get_robot_from_id(task.robot_id)
         hyperparams = Database.get_hyperparams_from_id(task.hyperparams_id)
-        # network_architecture = Database.get_network_architecture_from_id(
-        #      task.network_architecture_id
-        # )
+        network_architecture = Database.get_network_architecture_from_id(
+            task.network_architecture_id
+        )
         map = Database.get_map_from_id(task.map_id)
 
         # Check if necessary task is set
@@ -59,7 +62,7 @@ class TaskManager:
             # reward,
             robot,
             hyperparams,
-            # network_architecture,
+            network_architecture,
             map
         )
 
@@ -67,11 +70,11 @@ class TaskManager:
         file_creator.create_robot_file(robot)
         file_creator.create_hyperparams_file(hyperparams)
         file_creator.create_map_file(map)
-        # file_creator.create_network_architecture_file(network_architecture)
+        file_creator.create_network_architecture_file(network_architecture)
 
         startup_command = training_startup_command(
             task.user_id, task.task_id, robot, map)
-        
+
         print(startup_command)
 
         self.start_task(task.task_id, startup_command)
@@ -233,7 +236,6 @@ class TaskManager:
         for scheduled_task in scheduled_tasks:
             is_startup_task = scheduled_task["type"] in [
                 ExecutableType.START_TRAINING, ExecutableType.START_EVALUATION]
-
             task = Database.get_task(scheduled_task["taskId"])
 
             if not task:
@@ -246,7 +248,6 @@ class TaskManager:
                 continue
 
             # Database.delete_scheduled_task(scheduled_task["taskId"])
-
             try:
                 self.multiplex_request(Task(task), scheduled_task["type"])
             except:
@@ -280,5 +281,4 @@ class TaskManager:
 
 if __name__ == "__main__":
     task_manager = TaskManager()
-
     task_manager.schedule_new_task()
