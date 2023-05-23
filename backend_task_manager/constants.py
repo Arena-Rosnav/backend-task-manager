@@ -1,6 +1,7 @@
 class TaskType:
     TRAINING = "training"
     EVALUATION = "evaluation"
+    PLOT = "plot"
 
 
 class TaskStatus:
@@ -18,6 +19,10 @@ class ExecutableType:
     START_EVALUATION = "start_evaluation"
     ABORT_EVALUATION = "abort_evaluation"
     FINISH_EVALUATION = "finish_evaluation"
+
+    START_PLOT = "start_plot"
+    ABORT_PLOT = "abort_plot"
+    FINISH_PLOT ="finish_plot"
 
     UPLOAD_DATA = "upload_data"
     UPLOAD_LOG = "upload_log"
@@ -39,6 +44,7 @@ class Type:
 class NotificationType:
     TRAINING_FINISHED = "training_finished"
     EVALUATION_FINISHED = "evaluation_finished"
+    PLOT_FINISHED = "plot_finished"
 
     NEW_BEST_MODEL = "new_best_model"
 

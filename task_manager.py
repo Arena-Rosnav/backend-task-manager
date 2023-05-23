@@ -120,6 +120,10 @@ class TaskManager:
             task.user_id,
             NotificationType.EVALUATION_STARTED
         )
+    
+    def create_plot(task):
+        print(colored(Fore.GREEN, "[START]"), colored(
+            Fore.MAGENTA, "[PLOT]"), task.name)
 
     def stop_task(self, task, status):
         print(colored(Fore.RED, f"[{status.upper()}]"), task.name)
@@ -238,14 +242,14 @@ class TaskManager:
 
             if not task:
                 return
-
+            '''
             if (
                 is_startup_task
                 and running_tasks >= 10
             ):
                 continue
-
-            # Database.delete_scheduled_task(scheduled_task["taskId"])
+            '''
+            #Database.delete_scheduled_task(scheduled_task["taskId"])
 
             try:
                 self.multiplex_request(Task(task), scheduled_task["type"])
@@ -265,11 +269,13 @@ class TaskManager:
             return self.start_training(task)
         if type == ExecutableType.START_EVALUATION:
             return self.start_evaluation(task)
+        if type == ExecutableType.START_Plot:
+            return self.create_plot(task)
 
-        if type in [ExecutableType.ABORT_EVALUATION, ExecutableType.ABORT_TRAINING]:
+        if type in [ExecutableType.ABORT_EVALUATION, ExecutableType.ABORT_TRAINING, ExecutableType.ABORT_PLOT]:
             return self.stop_task(task, TaskStatus.ABORTED)
 
-        if type in [ExecutableType.FINISH_EVALUATION, ExecutableType.FINISH_TRAINING]:
+        if type in [ExecutableType.FINISH_EVALUATION, ExecutableType.FINISH_TRAINING, ExecutableType.FINISH_PLOT]:
             return self.stop_task(task, TaskStatus.FINISHED)
 
         if type == ExecutableType.UPLOAD_DATA:
