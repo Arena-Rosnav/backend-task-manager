@@ -43,7 +43,7 @@ class FileCreator:
         self._create_dir(id, additional_paths)
         print(data)
 
-        with open(os.path.join(config["BASE_PATH"], "data", id, name + ".json"), "w") as f:
+        with open(os.path.join(config["BASE_PATH"], "data", id, additional_paths, name + ".json"), "w") as f:
             json.dump(data, f)
 
     def _write_png(self, data, id, additional_paths=""):
@@ -168,7 +168,7 @@ class FileCreator:
         network_file["policy"] = network_architecture_data["policy"]
         print(network_file)
         self._write_json(network_file,
-                         "network_architecture", "network")
+                         "network_architecture", self.task_id, "network")
 
     def create_scenario_file(self, scenario_data):
         pass
