@@ -23,9 +23,9 @@ def training_startup_command(user_id, task_id, robot, map):
         f"{map_volume(base_path, task_id, map['type'], map.get('userId'))} "
         # For training configs
         f"-v {os.path.join(base_path, 'data', task_id, 'config', 'training_config.yaml')}:/root/src/arena-rosnav/training/configs/training_config.yaml "
-        f"-l {task_id} arena-rosnav ./startup/entry.sh "
         # For network
         f"{network_volume(base_path, task_id)} "
+        f"-l {task_id} arena-rosnav ./startup/entry.sh "
         # Arguments for entrypoint
         f"{default_entrypoint_params(task_id)} "
         f"{config['FINISH_TASK_ENDPOINT']} {config['NEW_BEST_MODEL_ENDPOINT']} {robot['name']}"
