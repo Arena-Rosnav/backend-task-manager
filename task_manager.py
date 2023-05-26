@@ -224,6 +224,11 @@ class TaskManager:
         DownloadType.LOG
     )
 
+  def upload_plot_data(task):
+    ## TODO
+
+    pass
+
   ## UTILS ##
 
   def start_task(self, task_id, startup_command):
@@ -297,10 +302,14 @@ class TaskManager:
     if type == ExecutableType.START_PLOT:
       return self.start_plotting(task)
 
-    if type in [ExecutableType.ABORT_EVALUATION, ExecutableType.ABORT_TRAINING]:
+    if type in [ExecutableType.ABORT_EVALUATION, ExecutableType.ABORT_TRAINING, ExecutableType.ABORT_PLOT]:
       return self.stop_task(task, TaskStatus.ABORTED)
 
     if type in [ExecutableType.FINISH_EVALUATION, ExecutableType.FINISH_TRAINING]:
+      return self.stop_task(task, TaskStatus.FINISHED)
+    
+    if type == ExecutableType.FINISH_PLOT:
+      self.upload_plot_data(task)
       return self.stop_task(task, TaskStatus.FINISHED)
 
     if type == ExecutableType.UPLOAD_DATA:

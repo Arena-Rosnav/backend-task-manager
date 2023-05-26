@@ -54,11 +54,28 @@ def plotting_startup_command(user_id, task_id, datasets):
   base_path = config["BASE_PATH"]
   # TODO: Adjust for plotting.
 
+  eval_paths = []
+
+  for eval_id in datasets:
+    task = Database.get_task(eval_id)
+
+    user_id = str(task.user_id)
+
+    path = os.path.join(base_path, "data", user_id, eval_id)
+
+    subpaths = [x[0] for x in os.walk(path)]
+
+    for subpath in subpaths:
+      eval_paths.append(f"-v {os.path.join(base_path, 'data', user_id, eval_id, subpath)}:/root/src/arena-evaluation/data/{eval_id}")
+
   return (
       f"docker run -it --rm --name {task_id} --net=host "
       # For the entry file
+      f"-v {os.path.join(base_path, 'docker', 'plotting')}:/root/startup "
+
       f"-v {os.path.join(base_path, 'data', task_id, 'plot')}:/root/src/arena-evaluation/plot_declarations "
-      f"-v {os.path.join(base_path, 'data', task_id, 'plot')}:/root/src/arena-evaluation/plot_declarations "
+      f"{' '.join(eval_paths)} "
+      f"-v {os.path.join(base_path, 'data', user_id, task_id)}:/root/src/arena-evaluation/plots/{Docker.SAVE_LOCATION_PLOT} "
       # f"-v {os.path.join(base_path, '.env')}:/root/startup/.env"
       # For robot model
       # f"{robot_volume(base_path, task_id, robot['type'], robot.get('userId'))} "
@@ -68,7 +85,7 @@ def plotting_startup_command(user_id, task_id, datasets):
       f"-l {task_id} arena-rosnav ./startup/entry.sh "
       # Arguments for entrypoint
       f"{default_entrypoint_params(task_id)} "
-      f"{config['FINISH_TASK_ENDPOINT']} {robot['name']} "
+      f"{config['FINISH_TASK_ENDPOINT']} "
   )
 
 
