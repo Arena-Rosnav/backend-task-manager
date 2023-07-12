@@ -1,10 +1,10 @@
 [Unit]
-Description=Arena-Web Log-Updater Timer - Runs every 5 seconds
+Description=Arena-Web Log-Updater Timer - Runs every 2 seconds
 Requires=log_updater.service
 
 [Timer]
 Unit=log_updater.service
-OnUnitActiveSec=5s
+OnUnitActiveSec=2s
 AccuracySec=100ms
 
 [Install]

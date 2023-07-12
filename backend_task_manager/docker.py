@@ -10,7 +10,8 @@ def training_startup_command(user_id, task_id, robot, map):
     base_path = config["BASE_PATH"]
 
     return (
-        f"docker run -it --rm -d --name {task_id} "
+        # f"docker run -it --rm -d --name {task_id} "
+        f"docker run -it --rm --name {task_id} "
         # For the entry file
         f"-v {os.path.join(base_path, 'docker', 'training')}:/root/startup "
         # For created agent
@@ -28,10 +29,11 @@ def training_startup_command(user_id, task_id, robot, map):
     )
 
 
-def evaluation_startup_command(user_id, task_id, robot, planner):
+def evaluation_startup_command(user_id, task_id, robot, planner, map):
     base_path = config["BASE_PATH"]
 
     return (
+        # f"docker run -it --rm -d --name {task_id} --net=host "
         f"docker run -it --rm -d --name {task_id} --net=host "
         # For the entry file
         f"-v {os.path.join(base_path, 'docker', 'evaluation')}:/root/startup "
@@ -39,12 +41,60 @@ def evaluation_startup_command(user_id, task_id, robot, planner):
         f"{robot_volume(base_path, task_id, robot['type'], robot.get('userId'))} "
         # For Planner
         f"{planner_volume(base_path, user_id, task_id, robot, planner)} "
+        # For Map
+        f"{map_volume(base_path, task_id, map['type'], map.get('userId'))} "
+        # For Scenario
+        f"-v {os.path.join(base_path, 'data', task_id, 'scenarios')}:/root/src/arena-rosnav/task_generator/scenarios "
+        
+        # Temporary
+        f"-v /home/reyk/Schreibtisch/Uni/IGNC/arena-rosnav/src/arena-rosnav/utils/rviz_utils/tmp:/root/src/arena-rosnav/utils/rviz_utils/tmp "
+        
         # For data recording
         f"-v {os.path.join(base_path, 'data', user_id, task_id)}:/root/src/arena-evaluation/data "
         f"-l {task_id} arena-rosnav ./startup/entry.sh "
         # Arguments for entrypoint
         f"{default_entrypoint_params(task_id)} "
-        f"{config['FINISH_TASK_ENDPOINT']} {robot['name']} "
+        f"{config['FINISH_TASK_ENDPOINT']} {robot['name']} {planner['name'].lower()} "
+        f"{Docker.NAME_OF_MAP} {Docker.NAME_OF_SCENARIO} "
+    )
+
+
+def plotting_startup_command(user_id, task_id, datasets):
+    base_path = config["BASE_PATH"]
+    # TODO: Adjust for plotting.
+
+    eval_paths = []
+
+    for eval_id in datasets:
+        task = Database.get_task(eval_id)
+
+        user_id = str(task.user_id)
+
+        path = os.path.join(base_path, "data", user_id, eval_id)
+
+        subpaths = [x[0] for x in os.walk(path)]
+
+        for subpath in subpaths:
+            eval_paths.append(f"-v {os.path.join(base_path, 'data', user_id, eval_id, subpath)}:/root/src/arena-evaluation/data/{eval_id}")
+
+    return (
+        f"docker run -it --rm --name {task_id} --net=host "
+        # For the entry file
+        f"-v {os.path.join(base_path, 'docker', 'plotting')}:/root/startup "
+
+        f"-v {os.path.join(base_path, 'data', task_id, 'plot')}:/root/src/arena-evaluation/plot_declarations "
+        f"{' '.join(eval_paths)} "
+        f"-v {os.path.join(base_path, 'data', user_id, task_id)}:/root/src/arena-evaluation/plots/{Docker.SAVE_LOCATION_PLOT} "
+        # f"-v {os.path.join(base_path, '.env')}:/root/startup/.env"
+        # For robot model
+        # f"{robot_volume(base_path, task_id, robot['type'], robot.get('userId'))} "
+        # For Planner
+        # f"{planner_volume(base_path, user_id, task_id, robot, planner)} "
+        # Namen von Docker ändern?
+        f"-l {task_id} arena-rosnav ./startup/entry.sh "
+        # Arguments for entrypoint
+        f"{default_entrypoint_params(task_id)} "
+        f"{config['FINISH_TASK_ENDPOINT']} "
     )
 
 
