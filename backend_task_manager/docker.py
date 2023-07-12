@@ -34,7 +34,7 @@ def evaluation_startup_command(user_id, task_id, robot, planner, map):
 
     return (
         # f"docker run -it --rm -d --name {task_id} --net=host "
-        f"docker run -it --rm -d --name {task_id} --net=host "
+        f"docker run -it --rm -d --name {task_id} "
         # For the entry file
         f"-v {os.path.join(base_path, 'docker', 'evaluation')}:/root/startup "
         # For robot model
