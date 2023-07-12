@@ -187,3 +187,8 @@ default_map_values = {
     "occupied_thresh": 0.65,
     "origin": [0, 0, 0],
 }
+
+default_scenario_values = {
+    "map": Docker.NAME_OF_MAP,
+    "resets": 2
+}

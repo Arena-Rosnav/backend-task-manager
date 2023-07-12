@@ -34,6 +34,7 @@ class Docker:
   ROBOT_SENSOR_FRAME = "laser_link"
   ROBOT_LASER_UPDATE_RATE = 10
   NAME_OF_MAP = "map"
+  NAME_OF_SCENARIO = "scenario"
   SAVE_LOCATION_PLOT = "user_plots"
 
 

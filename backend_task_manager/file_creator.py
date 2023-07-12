@@ -12,7 +12,8 @@ from backend_task_manager.config import (
     default_global_costmap,
     default_local_costmap,
     default_map_values,
-    default_map_world_values
+    default_map_world_values,
+    default_scenario_values
 )
 
 from backend_task_manager.constants import Docker, Type
@@ -39,8 +40,10 @@ class FileCreator:
     with open(os.path.join(config["BASE_PATH"], "data", id, additional_paths, name + ".yaml"), "w") as f:
       yaml.dump(data, f)
 
-  def _write_json(self, data, name, id):
-    with open(os.path.join(config["BASE_PATH"], "data", id, name + ".json"), "w") as f:
+  def _write_json(self, data, name, id, additional_paths=""):
+    self._create_dir(id, additional_paths)
+    
+    with open(os.path.join(config["BASE_PATH"], "data", id, additional_paths, name + ".json"), "w") as f:
       json.dump(data, f)
 
   def _write_png(self, data, id, additional_paths=""):
@@ -163,8 +166,26 @@ class FileCreator:
     self._write_json(network_architecture_data, "network_architecture")
     pass
 
-  def create_scenario_file(self, scenario_data):
-    pass
+  def create_scenario_file(self, scenario_data, map_data):
+    robot = scenario_data["robot"]
+
+    scenario_file = {
+      "robots": [{
+        "start": FileCreator.get_array_from_coord(robot[0], map_data["resolution"], map_data["height"]),
+        "goal": FileCreator.get_array_from_coord(robot[1], map_data["resolution"], map_data["height"])
+      }],
+      "obstacles": {
+        "dynamic": [],
+        "static": []
+      },
+      ** default_scenario_values
+    }
+
+    self._write_json(scenario_file, Docker.NAME_OF_SCENARIO, self.task_id, "scenarios")
+
+  @staticmethod
+  def get_array_from_coord(coord_dict, map_resolution, map_height):
+    return [coord_dict["x"] * map_resolution, abs(map_height - coord_dict["y"]) * map_resolution, 0]
 
   def create_map_file(self, map_data):
     map_world_file = default_map_world_values
