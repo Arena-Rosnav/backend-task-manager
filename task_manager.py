@@ -131,8 +131,8 @@ class TaskManager:
         startup_command = evaluation_startup_command(
             robot_array,
             task,
+            map,
         )
-        print(startup_command)
         
         self.start_task(task.task_id, startup_command)
 
