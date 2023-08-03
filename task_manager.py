@@ -8,7 +8,7 @@ from backend_task_manager.database import Database
 from backend_task_manager.file_creator import FileCreator
 from backend_task_manager.config import config
 from backend_task_manager.constants import TaskStatus, NotificationType, ExecutableType, DownloadType
-from backend_task_manager.docker import training_startup_command, evaluation_startup_command, update_task_logs
+from backend_task_manager.docker import training_startup_command, plotting_startup_command, evaluation_startup_command, update_task_logs
 import backend_task_manager.utils as utils
 from backend_task_manager.s3 import S3
 
@@ -79,7 +79,7 @@ class TaskManager:
 
         startup_command = training_startup_command(
             task.user_id, task.task_id, robot, map)
-        
+
         print(startup_command)
 
         self.start_task(task.task_id, startup_command)
@@ -111,7 +111,8 @@ class TaskManager:
         # )
         scenario = Database.get_scenario_from_id(task.scenario_id)
 
-        
+        map = Database.get_map_from_id(scenario.get("mapId", ""))
+
         # Check if necessary task is set
         utils.check_parameters(
             # reward,
@@ -124,7 +125,8 @@ class TaskManager:
             file_creator.create_robot_file(robot)
         
         file_creator.create_evaluation_file(task.robots)
-        # file_creator.create_network_architecture_file(network_architecture)
+        file_creator.create_map_file(map)
+        file_creator.create_scenario_file(scenario, map)
         
         startup_command = evaluation_startup_command(
             robot_array,
@@ -138,6 +140,35 @@ class TaskManager:
             task.task_id,
             task.user_id,
             NotificationType.EVALUATION_STARTED
+        )
+
+    def start_plotting(self, task):
+        print(colored(Fore.GREEN, "[START]"), colored(
+            Fore.MAGENTA, "[PLOTTING]"), task.name)
+        # robot = Database.get_robot_from_id(task.robot_id)
+        # planner = Database.get_planner_from_id(task.planner_id)
+        # scenario = Database.get_scenario_from_id(task.scenario_id)
+
+        # utils.check_parameters(robot)
+        file_creator = FileCreator(task.task_id, task.user_id)
+
+        # TODO: Change parameter
+        file_creator.create_plotting_file(task)
+
+        startup_command = plotting_startup_command(
+            task.user_id,
+            task.task_id,
+            task.datasets
+            # robot,
+            # planner
+        )
+
+        self.start_task(task.task_id, startup_command)
+
+        Database.insert_new_task_notification(
+            task.task_id,
+            task.user_id,
+            NotificationType.PLOT_STARTED
         )
 
     def stop_task(self, task, status):
@@ -161,12 +192,12 @@ class TaskManager:
         except:
             traceback.print_exc()
 
-    ## UPLOAD DATA ##
+  ## UPLOAD DATA ##
 
     def upload_data(self, task):
         if task.status in [TaskStatus.RUNNING, TaskStatus.PENDING]:
             print(colored(Fore.RED, "[UPLOAD]"),
-                  "Cannot upload when not completed")
+                "Cannot upload when not completed")
 
         dir_path = os.path.join(
             config["BASE_PATH"], "data", task.user_id, task.task_id)
@@ -175,7 +206,7 @@ class TaskManager:
             return
 
         print(colored(Fore.BLUE, "[UPLOAD]"),
-              colored(Fore.CYAN, "[DATA]"), task.name)
+            colored(Fore.CYAN, "[DATA]"), task.name)
 
         file_content = utils.get_dir_as_zip(dir_path)
 
@@ -191,7 +222,7 @@ class TaskManager:
     def upload_log(self, task):
         if task.status in [TaskStatus.RUNNING, TaskStatus.PENDING]:
             print(colored(Fore.RED, "[UPLOAD]"),
-                  "Cannot upload when not completed")
+                "Cannot upload when not completed")
 
         file_path = os.path.join(
             config["BASE_PATH"], "data", task.task_id, "output.txt")
@@ -213,6 +244,11 @@ class TaskManager:
             NotificationType.LOG_DOWNLOAD_READY,
             DownloadType.LOG
         )
+
+    def upload_plot_data(task):
+        ## TODO
+
+        pass
 
     ## UTILS ##
 
@@ -258,13 +294,13 @@ class TaskManager:
             if not task:
                 return
 
-            if (
-                is_startup_task
-                and running_tasks >= 10
-            ):
-                continue
+            # if (
+            #     is_startup_task
+            #     and running_tasks >= 10
+            # ):
+            #   continue
 
-            # Database.delete_scheduled_task(scheduled_task["taskId"])
+            Database.delete_scheduled_task(scheduled_task["taskId"])
 
             try:
                 self.multiplex_request(Task(task), scheduled_task["type"])
@@ -284,11 +320,17 @@ class TaskManager:
             return self.start_training(task)
         if type == ExecutableType.START_EVALUATION:
             return self.start_evaluation(task)
+        if type == ExecutableType.START_PLOT:
+            return self.start_plotting(task)
 
-        if type in [ExecutableType.ABORT_EVALUATION, ExecutableType.ABORT_TRAINING]:
+        if type in [ExecutableType.ABORT_EVALUATION, ExecutableType.ABORT_TRAINING, ExecutableType.ABORT_PLOT]:
             return self.stop_task(task, TaskStatus.ABORTED)
 
         if type in [ExecutableType.FINISH_EVALUATION, ExecutableType.FINISH_TRAINING]:
+            return self.stop_task(task, TaskStatus.FINISHED)
+        
+        if type == ExecutableType.FINISH_PLOT:
+            self.upload_plot_data(task)
             return self.stop_task(task, TaskStatus.FINISHED)
 
         if type == ExecutableType.UPLOAD_DATA:

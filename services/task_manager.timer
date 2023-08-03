@@ -1,10 +1,10 @@
 [Unit]
-Description=Arena-Web Task-Manager Timer - Runs every 2 minutes
+Description=Arena-Web Task-Manager Timer - Runs every 10 seconds
 Requires=task_manager.service
 
 [Timer]
 Unit=task_manager.service
-OnUnitActiveSec=2m
+OnUnitActiveSec=10s
 AccuracySec=100ms
 
 [Install]

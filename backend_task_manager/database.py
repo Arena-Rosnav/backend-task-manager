@@ -103,7 +103,7 @@ class Database:
         return db.tasks.count_documents({
             "status": TaskStatus.RUNNING
         })
-
+    
     #### TASK PROCESS ##
 
     def update_task_log(task_id, log):
