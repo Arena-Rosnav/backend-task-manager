@@ -55,6 +55,21 @@ class FileCreator:
     def create_reward_file(self, reward_data):
         pass
 
+    def create_evaluation_file(self, evaluation_data):
+        # Create robot_setup
+        model_params = {"robots": []}
+        for evaluation_robot in evaluation_data:
+            new_robot = {
+                "model": evaluation_robot.robot["name"], 
+                "planner": evaluation_robot.planner["key"],
+                "amount": evaluation_robot.amount
+            }
+            if evaluation_robot.planner["key"] == "rosnav":
+                new_robot["agent"] = evaluation_robot.robot["name"]
+
+            model_params["robots"].append(new_robot)
+        self._write_yaml(model_params, self.user_id + "_evaluation", self.task_id, "robot_setup")
+
     def create_robot_file(self, robot_data):
         # Create robot.model.yaml
 

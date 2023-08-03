@@ -16,6 +16,13 @@ from backend_task_manager.s3 import S3
 def colored(color, text):
     return f"{color}{text}{Style.RESET_ALL}"
 
+class EvaluationRobot:
+    def __init__(self, robot) -> None:
+        self.robot_id = str(robot.get("robotId"))
+        self.planner_id = str(robot.get("plannerId"))
+        self.agent_id = str(robot.get("agentId"))
+        self.amount = int(robot.get("amount"))
+
 
 class Task:
     def __init__(self, task):
@@ -34,6 +41,7 @@ class Task:
         self.planner_id = str(task.get("plannerId"))
         self.scenario_id = str(task.get("scenarioId"))
         self.map_id = str(task.get("mapId"))
+        self.robots = [EvaluationRobot(robot) for robot in task.get("robots")]
 
         # Docker Pid
 
@@ -85,34 +93,45 @@ class TaskManager:
     def start_evaluation(self, task):
         print(colored(Fore.GREEN, "[START]"), colored(
             Fore.MAGENTA, "[EVALUATION]"), task.name)
+        # add all needed robots to docker
+        # add all needed planner to docker
+        # create yml file to load into docker
+        # add scenario to docker --> nothing changed
+        robot_array = []
 
-        # Get task from Database
-        # reward = Database.get_reward_from_id(task.reward_id)
-        robot = Database.get_robot_from_id(task.robot_id)
-        planner = Database.get_planner_from_id(task.planner_id)
+        for task_robot in task.robots:
+            task_robot.robot = Database.get_robot_from_id(task_robot.robot_id)
+            task_robot.planner = Database.get_planner_from_id(task_robot.planner_id)
+
+            if not task_robot.robot in robot_array:
+                robot_array.append(task_robot.robot)
+
         # network_architecture = Database.get_network_architecture_from_id(
         #      task.network_architecture_id
         # )
         scenario = Database.get_scenario_from_id(task.scenario_id)
 
+        
         # Check if necessary task is set
         utils.check_parameters(
             # reward,
-            robot,
+            robot_array,
             # network_architecture,
         )
 
         file_creator = FileCreator(task.task_id, task.user_id)
-        file_creator.create_robot_file(robot)
+        for robot in robot_array:
+            file_creator.create_robot_file(robot)
+        
+        file_creator.create_evaluation_file(task.robots)
         # file_creator.create_network_architecture_file(network_architecture)
-
+        
         startup_command = evaluation_startup_command(
-            task.user_id,
-            task.task_id,
-            robot,
-            planner
+            robot_array,
+            task,
         )
-
+        print(startup_command)
+        
         self.start_task(task.task_id, startup_command)
 
         Database.insert_new_task_notification(
